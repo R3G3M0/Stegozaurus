@@ -31,6 +31,10 @@ namespace Steganography
         private int maxLengthMessage = 0;
         private BitmapSource bSource;
 
+        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool DeleteObject([In] IntPtr hObject);
+
         public Stego()
         {
             InitializeComponent();
@@ -109,10 +113,9 @@ namespace Steganography
                 PngBitmapEncoder encoder = new PngBitmapEncoder();
                 
                 encoder.Interlace = PngInterlaceOption.Off;
-                //encoder.Interlace = PngInterlaceOption.On;
-
                 encoder.Frames.Add(BitmapFrame.Create(bSource)); 
                 encoder.Save(stream);
+
                 stream.Close();
 
                 logger.printToLog("\nИзображение-контейнер успешно сохранено.");
@@ -121,38 +124,6 @@ namespace Steganography
 
         private void btnInsertClick(object sender, RoutedEventArgs e)
         {
-            
-                /*
-            String message = txtMessage.Text;
-
-            preprocessor.CheckLang(message, 0);
-
-            if(cbRussian.IsChecked == true)
-            {
-                encoder = new MessageEncoder(false);
-            }
-            else
-            {
-                encoder = new MessageEncoder(true);
-            }
-            
-            BitArray messageEncoded = encoder.Encode(message);
-
-            String pass = txtPassword.Password;
-            if (pass.Length < 4)
-            {
-                MessageBox.Show("Минимальная длина пароля - 4 символа!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            List<int> indexes = generator.generate(pass, messageEncoded.Length);
-
-            bool result = false;
-
-            result = insertBits(bSource, messageEncoded, indexes);
-
-            */
-
             int pas = GetPasswordFromUser();
             bool result = false;
 
@@ -280,10 +251,6 @@ namespace Steganography
         }
 
 
-        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DeleteObject([In] IntPtr hObject);
-
         private ImageSource ImageSourceFromBitmap(Bitmap bmp)
         {
             var handle = bmp.GetHbitmap();
@@ -315,5 +282,4 @@ namespace Steganography
             cbRussian.IsChecked = true;
         }
     }
-
 }

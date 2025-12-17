@@ -7,12 +7,10 @@ namespace Steganography
     {
         public List<int> generate(string password, int max)
         {
-            //int[] sequence;
             int hash = makeHash(password);
 
             Random rand = new Random(hash);
             List<int> randInt = new List<int>();
-            //int max = bitmap.PixelHeight * bitmap.PixelWidth - 1;
 
             for (int i = 0, k = 0; i < (max / 2); i++)
             {

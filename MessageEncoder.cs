@@ -136,6 +136,7 @@ namespace Steganography
             return finalArr;
         }
 
+        // где код этого метода потерялся??? и как тогда декодируется вообще?
         public string Decode(BitArray input)
         {
 
