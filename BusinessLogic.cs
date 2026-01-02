@@ -237,7 +237,6 @@ namespace Steganography
         {
             int size = finish - start;
             BitArray exBitAr = new BitArray(size);
-            //  BitArray buf = new BitArray(8);
             BitArray exBufLSB = new BitArray(3);
             BitArray exBufLSB2 = new BitArray(2);
             byte[] exColor = { 0, 0, 0, 0 };

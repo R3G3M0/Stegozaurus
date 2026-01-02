@@ -40,6 +40,8 @@ namespace Steganography
             stAnalyzer = new StegoAnalyzer();
             businessLogic = new BusinessLogic();
             logger = new Logger(ref txtLog);
+            encoder = new MessageEncoder(true);
+            generator = new CryptoGenerator();
 
         }
             
@@ -171,7 +173,6 @@ namespace Steganography
 
         }
 
-        //перенести в MessageEncoder
         private BitArray getBitArray()
         {
 
@@ -217,11 +218,13 @@ namespace Steganography
             return bitArrayCod;
         }
 
+        // переписать к хуям собачим эту поебень [02.01.2026]
+        //######################################
         private int GetPasswordFromUser()
         {
-            int p = 0;
             string pass = txtPassword.Password;
             int i = 1;
+            int p = 0;
             int p1 = 0;
 
             if (pass.Length < 4)
@@ -230,6 +233,7 @@ namespace Steganography
             }
             else
             {
+                // этот функционал реализован в Generator::makeHash();
                 foreach (char element in pass)
                 {
                     p += i * (int)element;
@@ -239,12 +243,12 @@ namespace Steganography
                 p1 = p % 1327;
                 if (p1 == 0)
                     p1 = p % 1361;
-
             }
             return p1;
+            //generator.generate(pass, 10);
         }
 
-
+        //######################################
         private ImageSource ImageSourceFromBitmap(Bitmap bmp)
         {
             var handle = bmp.GetHbitmap();

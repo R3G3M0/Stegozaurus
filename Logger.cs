@@ -16,6 +16,7 @@ namespace Steganography
         {
             _log = log;
         }
+
         public void printToLog(string logMessage)
         {
            _log.Text += logMessage;

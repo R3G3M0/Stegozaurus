@@ -24,6 +24,7 @@ namespace Steganography
 
             return randInt;
         }
+
         private int makeHash(string password)
         {
             int p = 0;
