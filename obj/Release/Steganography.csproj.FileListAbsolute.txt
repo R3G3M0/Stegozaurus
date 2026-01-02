@@ -1,0 +1,14 @@
+E:\diplom\стеганографияC#\bin\Release\StegoModule.exe.config
+E:\diplom\стеганографияC#\bin\Release\StegoModule.exe
+E:\diplom\стеганографияC#\bin\Release\StegoModule.pdb
+E:\diplom\стеганографияC#\obj\Release\Steganography.csprojAssemblyReference.cache
+E:\diplom\стеганографияC#\obj\Release\MainWnd.baml
+E:\diplom\стеганографияC#\obj\Release\MainWnd.g.cs
+E:\diplom\стеганографияC#\obj\Release\App.g.cs
+E:\diplom\стеганографияC#\obj\Release\StegoModule_MarkupCompile.cache
+E:\diplom\стеганографияC#\obj\Release\StegoModule.g.resources
+E:\diplom\стеганографияC#\obj\Release\Steganography.Properties.Resources.resources
+E:\diplom\стеганографияC#\obj\Release\Steganography.csproj.GenerateResource.cache
+E:\diplom\стеганографияC#\obj\Release\Steganography.csproj.CoreCompileInputs.cache
+E:\diplom\стеганографияC#\obj\Release\StegoModule.exe
+E:\diplom\стеганографияC#\obj\Release\StegoModule.pdb
