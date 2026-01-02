@@ -14,10 +14,6 @@ using System.Runtime.InteropServices;
 
 namespace Steganography
 {
-    /// <summary>
-    /// Interaction logic for MainWnd.xaml
-    /// </summary>
-    /// 
      
     public partial class Stego : Window
     {
@@ -43,8 +39,6 @@ namespace Steganography
             preprocessor = new Preprocessor();
             stAnalyzer = new StegoAnalyzer();
             businessLogic = new BusinessLogic();
-
-            //encoder = new MessageEncoder(true);
             logger = new Logger(ref txtLog);
 
         }
@@ -96,7 +90,7 @@ namespace Steganography
         private void btnSaveClick(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.FileName = "Enc"; // Default file name
+            dlg.FileName = "Encripted"; // Default file name
             dlg.DefaultExt = ".png"; // Default file extension
             dlg.Filter = "Portable Network Graphics (.png)|*.png";
 
