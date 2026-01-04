@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
-using System.Collections;
-using System.Drawing;
-using System.Runtime.InteropServices;
 
 // ПЕРЕНЕСТИ ВСЮ БИЗНЕС ЛОГИКУ ИЗ ЭТОГО ФАЙЛА!!!   [28.10.2025]
 // перенёс ExtractMessage [15.12.2025]
 // перенёс insertBitsToBitmap [16.12.2025]
+// перенёс getBitArray и прочие вспомогательные функции [04.01.2026]
 
 namespace Steganography
 {
@@ -25,11 +22,8 @@ namespace Steganography
         private BusinessLogic businessLogic;
         private int lengthSize = 0;
         private int maxLengthMessage = 0;
-        private BitmapSource bSource;
 
-        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DeleteObject([In] IntPtr hObject);
+        private BitmapSource bSource; // пока что пусть будет частью этого класса, потом нужно вынести в BusinessLogic
 
         public Stego()
         {
@@ -78,7 +72,7 @@ namespace Steganography
                 imageBox.Source = bSource;
                 imageBox.Stretch = Stretch.Uniform;
 
-                // рассчет максимальной длины сообщения
+                // рассчет максимальной длины сообщения в символах
                 int maxLength = preprocessor.GetLength(bSource.PixelWidth, bSource.PixelHeight);
 
                 GetLength();
@@ -87,6 +81,50 @@ namespace Steganography
                 logger.printToLog("\nИзображенние контейнер успешно открыто.");
             }
            
+        }
+        private void btnInsertClick(object sender, RoutedEventArgs e)
+        {
+            int pas = GetPasswordFromUser();
+            bool result = false;
+
+            if (pas > 0)
+            {
+                businessLogic.bSource = bSource;
+                String message = txtMessage.Text;
+                businessLogic.maxLengthMessage = maxLengthMessage;
+                businessLogic.lengthSize = lengthSize;
+
+                result = businessLogic.insertBitToBitmap(message, pas);
+
+                bSource = businessLogic.bSource;
+            }
+
+            if (result == true)
+            {
+                imageBox.Source = businessLogic.bSource;
+                imageBox.Stretch = Stretch.Uniform;
+                textBoxMSE.Text = businessLogic.MSE.ToString();
+                textBoxPSNR.Text = businessLogic.PSNR.ToString();
+                MessageBox.Show("Операция встраивания завершилась успешно!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                logger.printToLog("\nОперация встраивания завершилась успешно!\n");
+            }
+            else
+            {
+                logger.printToLog("\nОперация встраивания завершилась успешно!\n");
+                logger.informUser("Ошибка", "Произошла ошибка при встраивании информации!", 3);
+            }
+
+        }
+
+        private void btnExtractClick(object sender, RoutedEventArgs e)
+        {
+            // где блять проверка того, что введён пароль? [15.12.2025]
+
+            // сделал пока так, потом сделаю нормальный DI [15.12.2025]
+            businessLogic.bSource = bSource;
+            txtMessage.Text = businessLogic.extractMessage(GetPasswordFromUser(), lengthSize, maxLengthMessage);
+
+            logger.printToLog("\nИзвлечение сообщения прошло успешно!\n");
         }
 
         private void btnSaveClick(object sender, RoutedEventArgs e)
@@ -118,46 +156,7 @@ namespace Steganography
             }
         }
 
-        private void btnInsertClick(object sender, RoutedEventArgs e)
-        {
-            int pas = GetPasswordFromUser();
-            bool result = false;
-
-            if (pas > 0)
-            {
-                businessLogic.bSource = bSource;
-                result = businessLogic.insertBitToBitmap(getBitArray(), pas);
-            }
-
-
-            if (result == true)
-            {
-                imageBox.Source = businessLogic.bSource;
-                imageBox.Stretch = Stretch.Uniform;
-                textBoxMSE.Text = businessLogic.MSE.ToString();
-                textBoxPSNR.Text = businessLogic.PSNR.ToString();
-                MessageBox.Show("Операция встраивания завершилась успешно!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                logger.printToLog("\nОперация встраивания завершилась успешно!\n");
-            }
-            else
-            {
-                logger.printToLog("\nОперация встраивания завершилась успешно!\n");
-                logger.informUser("Ошибка", "Произошла ошибка при встраивании информации!", 3);
-            }
-                
-        }
-
-        private void btnExtractClick(object sender, RoutedEventArgs e)
-        {
-            // где блять проверка того, что введён пароль? [15.12.2025]
-
-            // сделал пока так, потом сделаю нормальный DI [15.12.2025]
-            businessLogic.bSource = bSource;
-            txtMessage.Text = businessLogic.extractMessage(GetPasswordFromUser(), lengthSize, maxLengthMessage);
-            
-            logger.printToLog("\nИзвлечение сообщения прошло успешно!\n");
-        }
-
+        // Эту функцию нужно убрать отсюда в BusinessLogic или в Preprocessor
         private void GetLength()
         {
             int size;
@@ -171,51 +170,6 @@ namespace Steganography
 
             maxLengthMessage = size - lengthSize;
 
-        }
-
-        private BitArray getBitArray()
-        {
-
-            String message = txtMessage.Text;
-
-            Encoding encoding = Encoding.Unicode; //тип кодировки ASCII
-            byte[] byteString = encoding.GetBytes(message); //кодируем строку в массив байт
-
-            int sizeBit = ((int)byteString.Length * 8); //длина сообщения в битах
-
-            if (sizeBit >= maxLengthMessage)
-            {
-                //сообщение слишком длинное
-                string exceptionMessage = "Длина сообщения слишком велика для данного изображения.";
-                throw new Exception(exceptionMessage);
-                //   return bitEr;
-
-            }
-            //размер сообщения в последовательность бит
-            BitArray bitArrayLength = new BitArray(lengthSize);
-            String stri = Convert.ToString(sizeBit, 2); //размер сообщения в двоичной с/с в текстовом представлении
-            //инициализация bitArrayLength
-            for (int i = stri.Length - 1, j = 0; i >= 0; i--, j++)
-            {
-                if (stri[i] == '0')
-                    bitArrayLength[j] = false;
-                else
-                    bitArrayLength[j] = true;
-            }
-
-            // склеивание 2 битовых массивов
-
-            BitArray bitArrayMessage = new BitArray(byteString);
-
-            BitArray bitArrayCod = new BitArray(bitArrayLength.Length + bitArrayMessage.Length);
-
-            for (int i = 0; i < bitArrayLength.Length; i++)
-                bitArrayCod[i] = bitArrayLength[i];
-
-            for (int i = bitArrayLength.Length, j = 0; i < bitArrayCod.Length; i++, j++)
-                bitArrayCod[i] = bitArrayMessage[j];
-
-            return bitArrayCod;
         }
 
         // переписать к хуям собачим эту поебень [02.01.2026]
@@ -247,17 +201,7 @@ namespace Steganography
             return p1;
             //generator.generate(pass, 10);
         }
-
         //######################################
-        private ImageSource ImageSourceFromBitmap(Bitmap bmp)
-        {
-            var handle = bmp.GetHbitmap();
-            try
-            {
-                return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-            }
-            finally { DeleteObject(handle); }
-        }
 
         private void CbEnglish_Checked(object sender, RoutedEventArgs e)
         {

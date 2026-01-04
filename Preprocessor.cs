@@ -7,6 +7,7 @@ namespace Steganography
     {
         private int messageLength;
         private int imageSize;
+
         public int GetLength(int width, int height)
         {
             const double embedingPersent = 0.1; //процент встраиваемой информации от размеров изображения

@@ -3,53 +3,38 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using System.Text;
 using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Media;
 
 namespace Steganography
 {
+    
     class BusinessLogic
     {
         private double mse = 0;
 
         // пока так передаётся, потом надо нормальный DI сделать
         public BitmapSource bSource { get; set; }
+        public int maxLengthMessage { get; set; }
+        public int lengthSize { get; set; }
+
         public double MSE = 0;
         public double PSNR = 0;
 
-        public String extractMessage(int password, int lengthSize, int maxLengthMessage)
-        {
-            String message = "0";
-            BitArray exBits = new BitArray(lengthSize);
+        // не знаю, на кой хер мне эта функция, но пусть лучше будеть здесь, чем в классе окна.
+        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool DeleteObject([In] IntPtr hObject);
 
-            int p = password;
-
-            //извлекаем размер
-            exBits = extractBit(0, lengthSize, p);
-            int exSize = bitToInt(exBits);
-
-            //извлекаем сообщение
-            // долбоебизм полнейший, сперва извлекаем сообщение а потом сравниваем то что извлекли с максимальной длиной сообщения
-            if (exSize <= maxLengthMessage)
-            {
-                exBits = extractBit(lengthSize, lengthSize + exSize, p);
-                byte[] exByte = new byte[exSize / 8];
-                exByte = bitToByte(exBits);
-                message = System.Text.Encoding.Unicode.GetString(exByte);
-            }
-            //else
-            //MessageBox.Show("Неверный пароль!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-
-            return message;
-        }
-
-        public bool insertBitToBitmap(BitArray bitArray, int pass)
+        public bool insertBitToBitmap(string message, int pass)
         {
             double MSE1 = 0;
             double PSNR1 = 0;
-            //  mse = 0;
             double sub = 0;
-            /////////////////////////////////////////////
 
+            BitArray bitArray = getBitArray(message);
             WriteableBitmap bitmap = new WriteableBitmap(bSource);
             int step = bitmap.Format.BitsPerPixel / 8;
 
@@ -57,7 +42,6 @@ namespace Steganography
             //перенести в Generator [16.12.2025]
             //########################################
 
-            // randInt = generator.generate(pass, max);
             Random rand = new Random(pass);
             List<int> randInt = new List<int>();
             int max = bitmap.PixelHeight * bitmap.PixelWidth - 1;
@@ -117,6 +101,73 @@ namespace Steganography
             bSource = bitmap;
 
             return true;
+        }
+
+        public String extractMessage(int password, int lengthSize, int maxLengthMessage)
+        {
+            String message = "0";
+            BitArray exBits = new BitArray(lengthSize);
+
+            int p = password;
+
+            //извлекаем размер
+            exBits = extractBit(0, lengthSize, p);
+            int exSize = bitToInt(exBits);
+
+            //извлекаем сообщение
+            // долбоебизм полнейший, сперва извлекаем сообщение а потом сравниваем то что извлекли с максимальной длиной сообщения
+            if (exSize <= maxLengthMessage)
+            {
+                exBits = extractBit(lengthSize, lengthSize + exSize, p);
+                byte[] exByte = new byte[exSize / 8];
+                exByte = bitToByte(exBits);
+                message = System.Text.Encoding.Unicode.GetString(exByte);
+            }
+
+            return message;
+        }
+
+        private BitArray getBitArray(string message)
+        {
+
+            Encoding encoding = Encoding.Unicode; //тип кодировки ASCII
+            byte[] byteString = encoding.GetBytes(message); //кодируем строку в массив байт
+
+            int sizeBit = ((int)byteString.Length * 8); //длина сообщения в битах
+
+            if (sizeBit >= maxLengthMessage)
+            {
+                //сообщение слишком длинное
+                string exceptionMessage = "Длина сообщения слишком велика для данного изображения.";
+                throw new Exception(exceptionMessage);
+                //   return bitEr;
+
+            }
+            //размер сообщения в последовательность бит
+            BitArray bitArrayLength = new BitArray(lengthSize);
+            String stri = Convert.ToString(sizeBit, 2); //размер сообщения в двоичной с/с в текстовом представлении
+            //инициализация bitArrayLength
+            for (int i = stri.Length - 1, j = 0; i >= 0; i--, j++)
+            {
+                if (stri[i] == '0')
+                    bitArrayLength[j] = false;
+                else
+                    bitArrayLength[j] = true;
+            }
+
+            // склеивание 2 битовых массивов
+
+            BitArray bitArrayMessage = new BitArray(byteString);
+
+            BitArray bitArrayCod = new BitArray(bitArrayLength.Length + bitArrayMessage.Length);
+
+            for (int i = 0; i < bitArrayLength.Length; i++)
+                bitArrayCod[i] = bitArrayLength[i];
+
+            for (int i = bitArrayLength.Length, j = 0; i < bitArrayCod.Length; i++, j++)
+                bitArrayCod[i] = bitArrayMessage[j];
+
+            return bitArrayCod;
         }
 
         private int sm2lsb(int colors, bool bit1, bool bit2)
@@ -296,6 +347,16 @@ namespace Steganography
 
             return exBitAr;
 
+        }
+
+        private ImageSource ImageSourceFromBitmap(Bitmap bmp)
+        {
+            var handle = bmp.GetHbitmap();
+            try
+            {
+                return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally { DeleteObject(handle); }
         }
     }
 }

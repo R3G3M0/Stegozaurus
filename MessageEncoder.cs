@@ -195,6 +195,7 @@ namespace Steganography
                 }
             return result;
         }
+
         ~MessageEncoder()
         {
             codeTable.Clear();

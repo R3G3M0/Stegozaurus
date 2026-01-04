@@ -41,7 +41,6 @@ namespace Steganography
             if (p1 == 0)
                 p1 = p % 1361;
 
-
             return p1;
         }
     }
