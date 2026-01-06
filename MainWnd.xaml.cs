@@ -84,17 +84,17 @@ namespace Steganography
         }
         private void btnInsertClick(object sender, RoutedEventArgs e)
         {
-            int pas = GetPasswordFromUser();
+            int hash = GetPasswordFromUser();
             bool result = false;
 
-            if (pas > 0)
+            if (hash > 0)
             {
                 businessLogic.bSource = bSource;
                 String message = txtMessage.Text;
                 businessLogic.maxLengthMessage = maxLengthMessage;
                 businessLogic.lengthSize = lengthSize;
 
-                result = businessLogic.insertBitToBitmap(message, pas);
+                result = businessLogic.insertBitToBitmap(message, hash);
 
                 bSource = businessLogic.bSource;
             }
@@ -172,36 +172,21 @@ namespace Steganography
 
         }
 
-        // переписать к хуям собачим эту поебень [02.01.2026]
-        //######################################
         private int GetPasswordFromUser()
         {
             string pass = txtPassword.Password;
-            int i = 1;
-            int p = 0;
-            int p1 = 0;
 
             if (pass.Length < 4)
             {
                 MessageBox.Show("Минимальная длина пароля 4 символа!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return -1;
             }
             else
             {
-                // этот функционал реализован в Generator::makeHash();
-                foreach (char element in pass)
-                {
-                    p += i * (int)element;
-                    i++;
-                }
-
-                p1 = p % 1327;
-                if (p1 == 0)
-                    p1 = p % 1361;
+                return generator.makeHash(pass); 
             }
-            return p1;
-            //generator.generate(pass, 10);
+            
         }
-        //######################################
 
         private void CbEnglish_Checked(object sender, RoutedEventArgs e)
         {

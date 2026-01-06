@@ -5,7 +5,8 @@ namespace Steganography
 {
     public class CryptoGenerator
     {
-        public List<int> generate(string password, int max)
+        // возвращает список индексов пикселей
+        public List<int> generateListOfIndexes(string password, int max)
         {
             int hash = makeHash(password);
 
@@ -25,7 +26,8 @@ namespace Steganography
             return randInt;
         }
 
-        private int makeHash(string password)
+        // TODO: потом вместо этой поеботы сделать нормальное хэширование из библиотек Microsoft
+        public int makeHash(string password)
         {
             int p = 0;
             int i = 1;

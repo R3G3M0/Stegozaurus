@@ -10,6 +10,9 @@ using System.Windows.Media;
 
 namespace Steganography
 {
+    // TODO:
+    // Переписать этот класс так, чтобы он вызывал generator, encoder и stAnalyzer, а не делал всё сам.
+    // Слишком огромный класс, получился таким из-за того, что переносил всю логику из класса окна.
     
     class BusinessLogic
     {
@@ -20,15 +23,15 @@ namespace Steganography
         public int maxLengthMessage { get; set; }
         public int lengthSize { get; set; }
 
-        public double MSE = 0;
-        public double PSNR = 0;
+        public double MSE = 0; // Mean Squared Error
+        public double PSNR = 0; // Peak Signal to Noise Ratio
 
         // не знаю, на кой хер мне эта функция, но пусть лучше будеть здесь, чем в классе окна.
         [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteObject([In] IntPtr hObject);
 
-        public bool insertBitToBitmap(string message, int pass)
+        public bool insertBitToBitmap(string message, int hashSeed)
         {
             double MSE1 = 0;
             double PSNR1 = 0;
@@ -38,12 +41,12 @@ namespace Steganography
             WriteableBitmap bitmap = new WriteableBitmap(bSource);
             int step = bitmap.Format.BitsPerPixel / 8;
 
-            //инициализация псевдослучайного массива int
-            //перенести в Generator [16.12.2025]
+            //Это буквально функция generator-a generateListOfIndexes
             //########################################
 
-            Random rand = new Random(pass);
+            Random rand = new Random(hashSeed);
             List<int> randInt = new List<int>();
+
             int max = bitmap.PixelHeight * bitmap.PixelWidth - 1;
 
             for (int i = 0, k = 0; i < (bitArray.Length / 2); i++)
