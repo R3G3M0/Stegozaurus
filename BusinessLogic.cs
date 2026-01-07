@@ -106,7 +106,7 @@ namespace Steganography
             return true;
         }
 
-        public String extractMessage(int password, int lengthSize, int maxLengthMessage)
+        public String extractMessage(int password)
         {
             String message = "0";
             BitArray exBits = new BitArray(lengthSize);
@@ -148,7 +148,7 @@ namespace Steganography
             }
             //размер сообщения в последовательность бит
             BitArray bitArrayLength = new BitArray(lengthSize);
-            String stri = Convert.ToString(sizeBit, 2); //размер сообщения в двоичной с/с в текстовом представлении
+            String stri = Convert.ToString(sizeBit, 2); //размер сообщения в двоичной с/сч в текстовом представлении
             //инициализация bitArrayLength
             for (int i = stri.Length - 1, j = 0; i >= 0; i--, j++)
             {

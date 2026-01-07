@@ -20,9 +20,6 @@ namespace Steganography
         private StegoAnalyzer stAnalyzer;
         private Logger logger;
         private BusinessLogic businessLogic;
-        private int lengthSize = 0;
-        private int maxLengthMessage = 0;
-
         private BitmapSource bSource; // пока что пусть будет частью этого класса, потом нужно вынести в BusinessLogic
 
         public Stego()
@@ -73,10 +70,10 @@ namespace Steganography
                 imageBox.Stretch = Stretch.Uniform;
 
                 // рассчет максимальной длины сообщения в символах
-                int maxLength = preprocessor.GetLength(bSource.PixelWidth, bSource.PixelHeight);
+                int maxLength = preprocessor.GetMaxMessageLength(bSource.PixelWidth, bSource.PixelHeight);
+                businessLogic.maxLengthMessage = maxLength;
+                businessLogic.lengthSize = preprocessor.GetLengthSize(bSource.PixelWidth, bSource.PixelHeight);
 
-                GetLength();
-                
                 logger.informUser("Информация", "Максимальная длина сообщения(в символах) = " + maxLength / 6, 0);
                 logger.printToLog("\nИзображенние контейнер успешно открыто.");
             }
@@ -91,11 +88,7 @@ namespace Steganography
             {
                 businessLogic.bSource = bSource;
                 String message = txtMessage.Text;
-                businessLogic.maxLengthMessage = maxLengthMessage;
-                businessLogic.lengthSize = lengthSize;
-
                 result = businessLogic.insertBitToBitmap(message, hash);
-
                 bSource = businessLogic.bSource;
             }
 
@@ -122,7 +115,7 @@ namespace Steganography
 
             // сделал пока так, потом сделаю нормальный DI [15.12.2025]
             businessLogic.bSource = bSource;
-            txtMessage.Text = businessLogic.extractMessage(GetPasswordFromUser(), lengthSize, maxLengthMessage);
+            txtMessage.Text = businessLogic.extractMessage(GetPasswordFromUser()); 
 
             logger.printToLog("\nИзвлечение сообщения прошло успешно!\n");
         }
@@ -154,22 +147,6 @@ namespace Steganography
 
                 logger.printToLog("\nИзображение-контейнер успешно сохранено.");
             }
-        }
-
-        // Эту функцию нужно убрать отсюда в BusinessLogic или в Preprocessor
-        private void GetLength()
-        {
-            int size;
-
-            size = (bSource.PixelHeight * bSource.PixelWidth * 2);
-
-            lengthSize = (int)System.Math.Log((double)size, (double)2);
-            //проверка четности. если нечетно +1
-            if (lengthSize % 2 != 0)
-                lengthSize++;
-
-            maxLengthMessage = size - lengthSize;
-
         }
 
         private int GetPasswordFromUser()

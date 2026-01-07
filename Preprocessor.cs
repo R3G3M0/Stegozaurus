@@ -8,13 +8,13 @@ namespace Steganography
         private int messageLength;
         private int imageSize;
 
-        public int GetLength(int width, int height)
+        public int GetMaxMessageLength(int width, int height)
         {
             const double embedingPersent = 0.1; //процент встраиваемой информации от размеров изображения
             int maxMesLength = 0;
             int pixelCount = width * height;
             int bitsInsertedInPix = 2; // для 1 метода 2 бита информации в пиксель
-            // для 2 метода 6 бит в пиксель
+                                       // для 2 метода 6 бит в пиксель
 
             //максимальная длина сообщения (в битах)
             maxMesLength = (int)(pixelCount * embedingPersent * bitsInsertedInPix);
@@ -26,6 +26,18 @@ namespace Steganography
             // logger.InformUser();
 
             return maxMesLengthInSymb; 
+        }
+
+        public int GetLengthSize(int width, int height)
+        {
+            int size = (width * height * 2);
+
+            int lengthSize = (int)System.Math.Log((double)size, (double)2);
+            //проверка четности. если нечетно +1
+            if (lengthSize % 2 != 0)
+                lengthSize++;
+
+            return lengthSize;
         }
 
         public bool CheckLang(string mes, int flag)
