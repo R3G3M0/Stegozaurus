@@ -88,7 +88,8 @@ namespace Steganography
             {
                 businessLogic.bSource = bSource;
                 String message = txtMessage.Text;
-                result = businessLogic.insertBitToBitmap(message, hash);
+                businessLogic.maxLengthMessage = preprocessor.GetMaxMessageLength(bSource.PixelWidth, bSource.PixelHeight);
+                result = businessLogic.insertMessage(message, hash);
                 bSource = businessLogic.bSource;
             }
 

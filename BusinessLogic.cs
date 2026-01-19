@@ -20,7 +20,7 @@ namespace Steganography
 
         // пока так передаётся, потом надо нормальный DI сделать
         public BitmapSource bSource { get; set; }
-        public int maxLengthMessage { get; set; }
+        public int maxLengthMessage { get; set; } // максимальная возможная длина сообщения для данного изображения
         public int lengthSize { get; set; }
 
         public double MSE = 0; // Mean Squared Error
@@ -31,7 +31,8 @@ namespace Steganography
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteObject([In] IntPtr hObject);
 
-        public bool insertBitToBitmap(string message, int hashSeed)
+        // TODO: сейчас всегда возвращает true, планировалось видимо чтобы при ошибке встраивания вернуло false
+        public bool insertMessage(string message, int hashSeed)
         {
             double MSE1 = 0;
             double PSNR1 = 0;
@@ -41,25 +42,7 @@ namespace Steganography
             WriteableBitmap bitmap = new WriteableBitmap(bSource);
             int step = bitmap.Format.BitsPerPixel / 8;
 
-            //Это буквально функция generator-a generateListOfIndexes
-            //########################################
-
-            Random rand = new Random(hashSeed);
-            List<int> randInt = new List<int>();
-
-            int max = bitmap.PixelHeight * bitmap.PixelWidth - 1;
-
-            for (int i = 0, k = 0; i < (bitArray.Length / 2); i++)
-            {
-                bool equ = false;
-                k = rand.Next(max);
-                foreach (int ar in randInt)
-                    if (k == ar) equ = true;
-                if (!equ)
-                    randInt.Add(k);
-            }
-
-            //########################################
+            List<int> randInt = generateListOfIndexes(hashSeed, bitArray.Length);
 
             bitmap.Lock();
             unsafe
@@ -74,19 +57,15 @@ namespace Steganography
                     int color1 = color;
                     byte[] cB1 = BitConverter.GetBytes(color1);
 
-
                     color = sm2lsb(color, bitArray.Get(k), bitArray.Get(k + 1));
                     byte[] cB2 = BitConverter.GetBytes(color);
 
                     sub += System.Math.Pow((cB1[0] - cB2[0]), 2) + System.Math.Pow((cB1[1] - cB2[1]), 2) + System.Math.Pow((cB1[2] - cB2[2]), 2);
 
-
                     k += 2;
 
                     *((int*)(pBackBuffer + ptr)) = color;
-
                 }
-
             }
 
             bitmap.AddDirtyRect(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight));
@@ -106,34 +85,10 @@ namespace Steganography
             return true;
         }
 
-        public String extractMessage(int password)
-        {
-            String message = "0";
-            BitArray exBits = new BitArray(lengthSize);
-
-            int p = password;
-
-            //извлекаем размер
-            exBits = extractBit(0, lengthSize, p);
-            int exSize = bitToInt(exBits);
-
-            //извлекаем сообщение
-            // долбоебизм полнейший, сперва извлекаем сообщение а потом сравниваем то что извлекли с максимальной длиной сообщения
-            if (exSize <= maxLengthMessage)
-            {
-                exBits = extractBit(lengthSize, lengthSize + exSize, p);
-                byte[] exByte = new byte[exSize / 8];
-                exByte = bitToByte(exBits);
-                message = System.Text.Encoding.Unicode.GetString(exByte);
-            }
-
-            return message;
-        }
-
         private BitArray getBitArray(string message)
         {
-
-            Encoding encoding = Encoding.Unicode; //тип кодировки ASCII
+            //Encoding encoding = Encoding.Unicode; //тип кодировки ASCII
+            Encoding encoding = Encoding.ASCII;
             byte[] byteString = encoding.GetBytes(message); //кодируем строку в массив байт
 
             int sizeBit = ((int)byteString.Length * 8); //длина сообщения в битах
@@ -171,6 +126,161 @@ namespace Steganography
                 bitArrayCod[i] = bitArrayMessage[j];
 
             return bitArrayCod;
+        }
+
+        public String extractMessage(int hashSeed)
+        {
+            String message = "0";
+            BitArray exBits = new BitArray(lengthSize);
+
+            //извлекаем размер сообщения
+            exBits = extractBit(0, lengthSize, hashSeed);
+            int exSize = bitToInt(exBits);
+
+            if (exSize <= maxLengthMessage)
+            {
+                // извлекаем само сообщение
+                exBits = extractBit(lengthSize, lengthSize + exSize, hashSeed);
+                byte[] exByte = new byte[exSize / 8];
+                exByte = bitToByte(exBits);
+                message = System.Text.Encoding.ASCII.GetString(exByte);
+            }
+
+            return message;
+        }
+
+        private BitArray extractBit(int start, int end, int hashSeed)
+        {
+            int size = end - start;
+            BitArray exBitAr = new BitArray(size);
+            BitArray exBufLSB = new BitArray(3);
+            BitArray exBufLSB2 = new BitArray(2);
+            byte[] exColor = { 0, 0, 0, 0 };
+            int step = bSource.Format.BitsPerPixel / 8;
+            int k2 = 0;
+
+            WriteableBitmap bitmap = new WriteableBitmap(bSource);
+
+            // инициализация псевдослучайного массива int
+            List<int> randInt = generateListOfIndexes(hashSeed, end);
+
+            bitmap.Lock();
+            unsafe
+            {
+                int pbackbuffer = (int)bitmap.BackBuffer;
+                int k = 0;
+                foreach (int ar in randInt)
+                {
+                    if (k >= start)
+                    {
+                        int ptr = ar * step;
+
+                        int color = *((int*)(pbackbuffer + ptr));
+
+                        byte[] cByte = BitConverter.GetBytes(color);
+                        BitArray exBuf = new BitArray(cByte);
+                        exBufLSB[0] = exBuf[0];
+                        exBufLSB[1] = exBuf[8];
+                        exBufLSB[2] = exBuf[16];
+
+                        exBufLSB2 = exSM2LSB(exBufLSB);
+
+                        exBitAr.Set(k2, exBufLSB2[0]);
+                        exBitAr.Set((k2 + 1), exBufLSB2[1]);
+                        k2 += 2;
+                    }
+                    k += 2;
+                }
+            }
+            // bitmap.AddDirtyRect(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight));
+            bitmap.Unlock();
+
+            return exBitAr;
+        }
+
+        private List<int> generateListOfIndexes(int hashSeed, int end)
+        {
+            Random rand = new Random(hashSeed);
+            List<int> randInt = new List<int>();
+            int max = bSource.PixelHeight * bSource.PixelWidth - 1;
+
+            for (int i = 0, k = 0; i < (end / 2); i++)
+            {
+                bool equ = false;
+                k = rand.Next(max);
+                foreach (int ar in randInt)
+                {
+                    if (k == ar) equ = true;
+                }
+
+                if (!equ)
+                {
+                    randInt.Add(k);
+                }
+            }
+
+            return randInt;
+        }
+
+        private BitArray exSM2LSB(BitArray b1)
+        {
+            BitArray b2 = new BitArray(2);
+            bool i = b1[2];
+
+            if (i)
+            {
+                b2.Set(1, !(b1[1]));
+                b2.Set(0, b1[0]);
+            }
+            else
+            {
+                b2.Set(1, b1[1]);
+                b2.Set(0, !(b1[0]));
+            }
+
+            return b2;
+        }
+
+        // как отдельный метод - не нужен, вставить inline
+        private byte setLSB(byte bt, bool bl)
+        {
+            if ((bt % 2 == 1) & (!bl)) bt--;
+            if ((bt % 2 == 0) & (bl)) bt++;
+
+            return bt;
+        }
+
+        private int bitToInt(BitArray bitA)
+        {
+            int result = 0;
+            if (bitA.Count > 0)
+                for (int i = 0; i < bitA.Count; i++)
+                {
+                    if (bitA.Get(i))
+                        result = result + (int)Math.Pow(2, i);
+                }
+            return result;
+        }
+
+        private byte[] bitToByte(BitArray btA)
+        {
+            byte[] bt = new byte[btA.Length / 8];
+            BitArray bf = new BitArray(8);
+
+            for (int i = 0, j = 0, k = 0; i < btA.Count; i++, j++)
+            {
+                if (j != 7)
+                    bf[j] = btA[i];
+                else
+                {
+                    bf[j] = btA[i];
+                    bt[k] = (byte)bitToInt(bf);
+                    k++;
+                    j = -1;
+                }
+            }
+
+            return bt;
         }
 
         private int sm2lsb(int colors, bool bit1, bool bit2)
@@ -223,133 +333,6 @@ namespace Steganography
         {
             if (b) return 1;
             else return 0;
-        }
-
-        // как отдельный метод - не нужен, вставить inline
-        private byte setLSB(byte bt, bool bl)
-        {
-            if ((bt % 2 == 1) & (!bl)) bt--;
-            if ((bt % 2 == 0) & (bl)) bt++;
-
-            return bt;
-
-        }
-
-        private int bitToInt(BitArray bitA)
-        {
-            int result = 0;
-            if (bitA.Count > 0)
-                for (int i = 0; i < bitA.Count; i++)
-                {
-                    if (bitA.Get(i))
-                        result = result + (int)Math.Pow(2, i);
-                }
-            return result;
-        }
-
-        private byte[] bitToByte(BitArray btA)
-        {
-            byte[] bt = new byte[btA.Length / 8];
-            BitArray bf = new BitArray(8);
-
-            for (int i = 0, j = 0, k = 0; i < btA.Count; i++, j++)
-            {
-                if (j != 7)
-                    bf[j] = btA[i];
-                else
-                {
-                    bf[j] = btA[i];
-                    bt[k] = (byte)bitToInt(bf);
-                    k++;
-                    j = -1;
-                }
-            }
-
-            return bt;
-        }
-
-        private BitArray exSM2LSB(BitArray b1)
-        {
-            BitArray b2 = new BitArray(2);
-            bool i = b1[2];
-
-            if (i)
-            {
-                b2.Set(1, !(b1[1]));
-                b2.Set(0, b1[0]);
-            }
-            else
-            {
-                b2.Set(1, b1[1]);
-                b2.Set(0, !(b1[0]));
-            }
-
-            return b2;
-        }
-
-        private BitArray extractBit(int start, int finish, int pass)
-        {
-            int size = finish - start;
-            BitArray exBitAr = new BitArray(size);
-            BitArray exBufLSB = new BitArray(3);
-            BitArray exBufLSB2 = new BitArray(2);
-            byte[] exColor = { 0, 0, 0, 0 };
-            int step = bSource.Format.BitsPerPixel / 8;
-            int k2 = 0;
-
-            WriteableBitmap bitmap = new WriteableBitmap(bSource);
-
-            //инициализация псевдослучайного массива int
-            //randInt = generator.generate();
-            Random rand = new Random(pass);
-            List<int> randInt = new List<int>();
-            int max = bitmap.PixelHeight * bitmap.PixelWidth - 1;
-
-            for (int i = 0, k = 0; i < (finish / 2); i++)
-            {
-                bool equ = false;
-                k = rand.Next(max);
-                foreach (int ar in randInt)
-                    if (k == ar) equ = true;
-                if (!equ)
-                    randInt.Add(k);
-            }
-            bitmap.Lock();
-            unsafe
-            {
-                int pbackbuffer = (int)bitmap.BackBuffer;
-                int k = 0;
-                foreach (int ar in randInt)
-                {
-                    if (k >= start)
-                    {
-                        int ptr = ar * step;
-
-                        int color = *((int*)(pbackbuffer + ptr));
-
-
-                        byte[] cByte = BitConverter.GetBytes(color);
-                        BitArray exBuf = new BitArray(cByte);
-                        exBufLSB[0] = exBuf[0];
-                        exBufLSB[1] = exBuf[8];
-                        exBufLSB[2] = exBuf[16];
-
-                        exBufLSB2 = exSM2LSB(exBufLSB);
-
-                        exBitAr.Set(k2, exBufLSB2[0]);
-                        exBitAr.Set((k2 + 1), exBufLSB2[1]);
-                        k2 += 2;
-
-
-                    }
-                    k += 2;
-                }
-            }
-            // bitmap.AddDirtyRect(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight));
-            bitmap.Unlock();
-
-            return exBitAr;
-
         }
 
         private ImageSource ImageSourceFromBitmap(Bitmap bmp)
