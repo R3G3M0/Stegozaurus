@@ -4,7 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
 
-// ПЕРЕНЕСТИ ВСЮ БИЗНЕС ЛОГИКУ ИЗ ЭТОГО ФАЙЛА!!!   [28.10.2025]
+// ПЕРЕНЕСТИ ВСЮ БИЗНЕС ЛОГИКУ ИЗ ЭТОГО ФАЙЛА!!! [28.10.2025]
 // перенёс ExtractMessage [15.12.2025]
 // перенёс insertBitsToBitmap [16.12.2025]
 // перенёс getBitArray и прочие вспомогательные функции [04.01.2026]
@@ -14,7 +14,7 @@ namespace Steganography
      
     public partial class Stego : Window
     {
-        private CryptoGenerator generator;
+        private CryptoGenerator generator; // TODO: generator должен создаваться в классе businessLogic, он только там и используется
         private MessageEncoder encoder;
         private Preprocessor preprocessor;
         private StegoAnalyzer stAnalyzer;
@@ -33,7 +33,6 @@ namespace Steganography
             logger = new Logger(ref txtLog);
             encoder = new MessageEncoder(true);
             generator = new CryptoGenerator();
-
         }
             
         private void btnOpenClick(object sender, RoutedEventArgs e)
@@ -150,6 +149,8 @@ namespace Steganography
             }
         }
 
+        // TODO: переписать эту функцию, чтобы не было вызова generator-a
+        // Его должен вызывать класс bussinesLogic
         private int GetPasswordFromUser()
         {
             string pass = txtPassword.Password;

@@ -13,6 +13,7 @@ namespace Steganography
     // TODO:
     // Переписать этот класс так, чтобы он вызывал generator, encoder и stAnalyzer, а не делал всё сам.
     // Слишком огромный класс, получился таким из-за того, что переносил всю логику из класса окна.
+    // Сделать класс BusinessLogic фасадом, через который класс MainWindow общается с остальными классами
     
     class BusinessLogic
     {
@@ -57,10 +58,10 @@ namespace Steganography
                     int color1 = color;
                     byte[] cB1 = BitConverter.GetBytes(color1);
 
-                    color = sm2lsb(color, bitArray.Get(k), bitArray.Get(k + 1));
+                    color = SM2lsb(color, bitArray.Get(k), bitArray.Get(k + 1));
                     byte[] cB2 = BitConverter.GetBytes(color);
 
-                    sub += System.Math.Pow((cB1[0] - cB2[0]), 2) + System.Math.Pow((cB1[1] - cB2[1]), 2) + System.Math.Pow((cB1[2] - cB2[2]), 2);
+                    sub += Math.Pow((cB1[0] - cB2[0]), 2) + Math.Pow((cB1[1] - cB2[1]), 2) + Math.Pow((cB1[2] - cB2[2]), 2);
 
                     k += 2;
 
@@ -87,7 +88,6 @@ namespace Steganography
 
         private BitArray getBitArray(string message)
         {
-            //Encoding encoding = Encoding.Unicode; //тип кодировки ASCII
             Encoding encoding = Encoding.ASCII;
             byte[] byteString = encoding.GetBytes(message); //кодируем строку в массив байт
 
@@ -135,7 +135,7 @@ namespace Steganography
 
             //извлекаем размер сообщения
             exBits = extractBit(0, lengthSize, hashSeed);
-            int exSize = bitToInt(exBits);
+            int exSize = bitToInt(exBits); //длина извлекаемого сообщения в битах
 
             if (exSize <= maxLengthMessage)
             {
@@ -143,7 +143,7 @@ namespace Steganography
                 exBits = extractBit(lengthSize, lengthSize + exSize, hashSeed);
                 byte[] exByte = new byte[exSize / 8];
                 exByte = bitToByte(exBits);
-                message = System.Text.Encoding.ASCII.GetString(exByte);
+                message = Encoding.ASCII.GetString(exByte);
             }
 
             return message;
@@ -198,6 +198,7 @@ namespace Steganography
             return exBitAr;
         }
 
+        //  TODO: эту функцию заменить вызовом generator-a
         private List<int> generateListOfIndexes(int hashSeed, int end)
         {
             Random rand = new Random(hashSeed);
@@ -254,11 +255,13 @@ namespace Steganography
         {
             int result = 0;
             if (bitA.Count > 0)
+            {
                 for (int i = 0; i < bitA.Count; i++)
                 {
                     if (bitA.Get(i))
                         result = result + (int)Math.Pow(2, i);
                 }
+            }
             return result;
         }
 
@@ -283,7 +286,7 @@ namespace Steganography
             return bt;
         }
 
-        private int sm2lsb(int colors, bool bit1, bool bit2)
+        private int SM2lsb(int colors, bool bit1, bool bit2)
         {
             byte[] cByte = BitConverter.GetBytes(colors);
             bool[] match = { false, false };
@@ -331,8 +334,7 @@ namespace Steganography
 
         private int boolToInt(bool b)
         {
-            if (b) return 1;
-            else return 0;
+            return (b) ? 1 : 0; 
         }
 
         private ImageSource ImageSourceFromBitmap(Bitmap bmp)
