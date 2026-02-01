@@ -22,7 +22,9 @@ namespace Steganography
         // пока так передаётся, потом надо нормальный DI сделать
         public BitmapSource bSource { get; set; }
         public int maxLengthMessage { get; set; } // максимальная возможная длина сообщения для данного изображения
-        public int lengthSize { get; set; }
+        
+        public int lengthSize { get; set; } // размер поля, которое встраивается перед самим сообщением
+        // [flags][lengthSize][Message]
 
         public double MSE = 0; // Mean Squared Error
         public double PSNR = 0; // Peak Signal to Noise Ratio

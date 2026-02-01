@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Steganography.Stego"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="StegoModule" Height="722" Width="897" >
+    Title="Stegozaurus" Height="722" Width="897" >
     <Grid Height="674" Margin="10,8,17,9">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="10*" />
