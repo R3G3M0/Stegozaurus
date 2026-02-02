@@ -84,7 +84,7 @@
     </StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>stego.ico</ApplicationIcon>
+    <ApplicationIcon>Stegozaurus.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -181,6 +181,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="stego.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Stegozaurus.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
