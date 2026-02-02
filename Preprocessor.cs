@@ -5,19 +5,15 @@ namespace Steganography
     
     class Preprocessor
     {
-        private int messageLength;
-        private int imageSize;
-
         public int GetMaxMessageLength(int width, int height)
         {
             const double embedingPersent = 0.1; //процент встраиваемой информации от размеров изображения
-            int maxMesLength = 0;
             int pixelCount = width * height;
             int bitsInsertedInPix = 2; // для 1 метода 2 бита информации в пиксель
                                        // для 2 метода 6 бит в пиксель
 
             //максимальная длина сообщения (в битах)
-            maxMesLength = (int)(pixelCount * embedingPersent * bitsInsertedInPix);
+            int maxMesLength = (int)(pixelCount * embedingPersent * bitsInsertedInPix);
 
             // logger.WriteLog();
 
@@ -27,6 +23,8 @@ namespace Steganography
 
             return maxMesLengthInSymb; 
         }
+
+        // Возвращает lengthSize - длину поля, которое записывается перед основным сообщением
 
         public int GetLengthSize(int width, int height)
         {

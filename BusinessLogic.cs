@@ -24,12 +24,13 @@ namespace Steganography
         public int maxLengthMessage { get; set; } // максимальная возможная длина сообщения для данного изображения
         
         public int lengthSize { get; set; } // размер поля, которое встраивается перед самим сообщением
-        // [flags][lengthSize][Message]
+        //   lengthSize
+        // [    ...     ][Message]
 
         public double MSE = 0; // Mean Squared Error
         public double PSNR = 0; // Peak Signal to Noise Ratio
 
-        // не знаю, на кой хер мне эта функция, но пусть лучше будеть здесь, чем в классе окна.
+        // функция для безопасного удаления объекта
         [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteObject([In] IntPtr hObject);
@@ -100,12 +101,13 @@ namespace Steganography
                 //сообщение слишком длинное
                 string exceptionMessage = "Длина сообщения слишком велика для данного изображения.";
                 throw new Exception(exceptionMessage);
-                //   return bitEr;
 
             }
+
             //размер сообщения в последовательность бит
             BitArray bitArrayLength = new BitArray(lengthSize);
             String stri = Convert.ToString(sizeBit, 2); //размер сообщения в двоичной с/сч в текстовом представлении
+            
             //инициализация bitArrayLength
             for (int i = stri.Length - 1, j = 0; i >= 0; i--, j++)
             {
@@ -293,7 +295,7 @@ namespace Steganography
             byte[] cByte = BitConverter.GetBytes(colors);
             bool[] match = { false, false };
             BitArray lsb = new BitArray(3);
-            BitArray buf; //= new BitArray(8);
+            BitArray buf;
 
             buf = new BitArray(cByte);
             lsb[0] = buf[0];

@@ -180,9 +180,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="stego.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Stegozaurus.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
